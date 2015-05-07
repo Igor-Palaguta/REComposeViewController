@@ -26,7 +26,15 @@
 #import "REComposeViewController.h"
 #import <QuartzCore/QuartzCore.h>
 
-@interface REComposeViewController () <UIImagePickerControllerDelegate, UINavigationControllerDelegate>
+@interface REComposerPresenter: NSObject <UIViewControllerAnimatedTransitioning>
+
+@end
+
+@interface REComposerDismisser: NSObject <UIViewControllerAnimatedTransitioning>
+
+@end
+
+@interface REComposeViewController () <UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIViewControllerTransitioningDelegate>
 
 @property (strong, readonly, nonatomic) REComposeBackgroundView *backgroundView;
 @property (strong, readonly, nonatomic) UIView *containerView;
@@ -37,6 +45,8 @@
 
 @implementation REComposeViewController
 
+@dynamic canChangeImage;
+
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
@@ -44,8 +54,15 @@
         _cornerRadius = (REUIKitIsFlatMode()) ? 6 : 10;
         _sheetView = [[REComposeSheetView alloc] initWithFrame:CGRectMake(0, 0, self.currentWidth - 8, 202)];
         self.tintColor = [UIColor colorWithRed:247/255.0 green:247/255.0 blue:247/255.0 alpha:1.0];
+        self.modalPresentationStyle = UIModalPresentationCustom;
+        self.transitioningDelegate = self;
     }
     return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (int)currentWidth
@@ -68,7 +85,6 @@
     _backgroundView = [[REComposeBackgroundView alloc] initWithFrame:self.view.bounds];
     _backgroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     _backgroundView.centerOffset = CGSizeMake(0, - self.view.frame.size.height / 2);
-    _backgroundView.alpha = 0;
     if (REUIKitIsFlatMode()) {
         _backgroundView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.4];
     }
@@ -115,54 +131,17 @@
                               forControlEvents:UIControlEventTouchUpInside];
 }
 
-- (void)didMoveToParentViewController:(UIViewController *)parent
+-(void)viewDidAppear:(BOOL)animated
 {
-    [super didMoveToParentViewController:parent];
-
-    _backgroundView.frame = _rootViewController.view.bounds;
-    
-    if (REUIKitIsFlatMode()) {
-        [self layoutWithOrientation:self.interfaceOrientation width:self.view.frame.size.width height:self.view.frame.size.height];
-        self.containerView.alpha = 0;
-        [self.sheetView.textView becomeFirstResponder];
-    } else {
-        [UIView animateWithDuration:0.4 animations:^{
-            [self.sheetView.textView becomeFirstResponder];
-            [self layoutWithOrientation:self.interfaceOrientation width:self.view.frame.size.width height:self.view.frame.size.height];
-        }];
-    }
-    
-    [UIView animateWithDuration:0.3
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseInOut
-                     animations:^{
-                        if (REUIKitIsFlatMode()) {
-                            self.containerView.alpha = 1;
-                        }
-                        self.backgroundView.alpha = 1;
-    } completion:nil];
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(viewOrientationDidChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
-
-}
-
-- (void)presentFromRootViewController
-{
-    UIViewController *rootViewController = [UIApplication sharedApplication].keyWindow.rootViewController;
-    [self presentFromViewController:rootViewController];
-}
-
-- (void)presentFromViewController:(UIViewController *)controller
-{
-    _rootViewController = controller;
-    [controller addChildViewController:self];
-    [controller.view addSubview:self.view];
-    [self didMoveToParentViewController:controller];
+   [super viewDidAppear: animated];
+   [self.sheetView.textView becomeFirstResponder];
+   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(viewOrientationDidChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
 {
     [super viewWillDisappear: animated];
+    [self.sheetView.textView resignFirstResponder];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
 }
 
@@ -227,36 +206,18 @@
     _sheetView.textViewContainer.frame = textViewContainerFrame;
 }
 
-- (void)dismissViewControllerAnimated:(BOOL)flag completion:(void (^)(void))completion
-{
-    [_sheetView.textView resignFirstResponder];
-    __typeof(&*self) __weak weakSelf = self;
-    
-    [UIView animateWithDuration:0.4 animations:^{
-        if (REUIKitIsFlatMode()) {
-            self.containerView.alpha = 0;
-        } else {
-            CGRect frame = weakSelf.containerView.frame;
-            frame.origin.y =  weakSelf.rootViewController.view.frame.size.height;
-            weakSelf.containerView.frame = frame;
-        }
-    }];
-    
-    [UIView animateWithDuration:0.4
-                          delay:0.1
-                        options:UIViewAnimationOptionCurveEaseInOut
-                     animations:^{
-                         weakSelf.backgroundView.alpha = 0;
-                     } completion:^(BOOL finished) {
-                         [weakSelf.view removeFromSuperview];
-                         [weakSelf removeFromParentViewController];
-                         if (completion)
-                             completion();
-                     }];
-}
-
 #pragma mark -
 #pragma mark Accessors
+
+- (void)setCanChangeImage:(BOOL)canChangeImage
+{
+    _sheetView.attachmentViewButton.userInteractionEnabled = canChangeImage;
+}
+
+- (BOOL)canChangeImage
+{
+    return _sheetView.attachmentViewButton.userInteractionEnabled;
+}
 
 - (UINavigationItem *)navigationItem
 {
@@ -375,6 +336,85 @@
 - (void)viewOrientationDidChanged:(NSNotification *)notification
 {
     [self layoutWithOrientation:self.interfaceOrientation width:self.view.frame.size.width height:self.view.frame.size.height];
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source
+{
+   REComposerPresenter *transitioning = [REComposerPresenter new];
+   return transitioning;
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed
+{
+   REComposerDismisser * transitioning = [REComposerDismisser new];
+   return transitioning;
+}
+
+@end
+
+@implementation REComposerPresenter
+
+- (NSTimeInterval)transitionDuration:(id <UIViewControllerContextTransitioning>)transitionContext
+{
+   return 0.3;
+}
+
+- (void)animateTransition:(id <UIViewControllerContextTransitioning>)transitionContext
+{
+   REComposeViewController *composeViewController = (REComposeViewController*)[transitionContext viewControllerForKey:UITransitionContextToViewControllerKey];
+   
+   [[transitionContext containerView] addSubview:composeViewController.view];
+   composeViewController.backgroundView.alpha = 0;
+   
+   [UIView animateWithDuration: [self transitionDuration: transitionContext]
+                         delay:0
+                       options:UIViewAnimationOptionCurveEaseInOut
+                    animations:
+    ^{
+       [composeViewController layoutWithOrientation:composeViewController.interfaceOrientation
+                                              width:composeViewController.view.frame.size.width
+                                             height:composeViewController.view.frame.size.height];
+       composeViewController.backgroundView.alpha = 1;
+    }
+                    completion:
+    ^(BOOL completed)
+    {
+       [transitionContext completeTransition:![transitionContext transitionWasCancelled]];
+    }];
+}
+
+@end
+
+@implementation REComposerDismisser
+
+- (NSTimeInterval)transitionDuration:(id <UIViewControllerContextTransitioning>)transitionContext
+{
+   return 0.3;
+}
+
+- (void)animateTransition:(id <UIViewControllerContextTransitioning>)transitionContext
+{
+   REComposeViewController *composeViewController = (REComposeViewController*)[transitionContext viewControllerForKey:UITransitionContextFromViewControllerKey];
+
+   [composeViewController.sheetView.textView resignFirstResponder];
+
+   [UIView animateWithDuration: [self transitionDuration: transitionContext]
+                         delay:0
+                       options:UIViewAnimationOptionCurveEaseInOut
+                    animations:
+    ^{
+       composeViewController.containerView.alpha = 0;
+       composeViewController.backgroundView.alpha = 0;
+       CGRect frame = composeViewController.containerView.frame;
+       frame.origin.y =  composeViewController.view.frame.size.height;
+       composeViewController.containerView.frame = frame;
+    }
+                    completion:
+    ^(BOOL completed)
+    {
+       [transitionContext completeTransition:![transitionContext transitionWasCancelled]];
+       [composeViewController.view removeFromSuperview];
+    }];
 }
 
 @end

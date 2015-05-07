@@ -30,10 +30,10 @@
 
 @class REComposeViewController;
 
-typedef enum _REComposeResult {
+typedef NS_ENUM(NSUInteger, REComposeResult) {
     REComposeResultCancelled,
     REComposeResultPosted
-} REComposeResult;
+};
 
 typedef void (^REComposeViewControllerCompletionHandler)(REComposeViewController *composeViewController, REComposeResult result);
 
@@ -59,9 +59,7 @@ typedef void (^REComposeViewControllerCompletionHandler)(REComposeViewController
 @property (strong, readwrite, nonatomic) UIColor *tintColor;
 @property (strong, readwrite, nonatomic) UIImage *attachmentImage;
 @property (weak, readonly, nonatomic) UIViewController *rootViewController;
-
-- (void)presentFromRootViewController;
-- (void)presentFromViewController:(UIViewController *)controller;
+@property (assign, readwrite, nonatomic) BOOL canChangeImage;
 
 @end
 
