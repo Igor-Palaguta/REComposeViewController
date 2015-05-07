@@ -88,7 +88,9 @@
 				30118CCA1631D0DD00B82F14 /* Frameworks */,
 				30118CC81631D0DD00B82F14 /* Products */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
+			tabWidth = 4;
 		};
 		30118CC81631D0DD00B82F14 /* Products */ = {
 			isa = PBXGroup;

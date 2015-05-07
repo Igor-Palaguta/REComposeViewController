@@ -59,7 +59,7 @@
     composeViewController.hasAttachment = YES;
     composeViewController.delegate = self;
     composeViewController.text = @"Test";
-    [composeViewController presentFromRootViewController];
+    [self presentViewController: composeViewController animated: YES completion: nil];
 }
 
 - (void)tumblrExampleButtonPressed
@@ -69,7 +69,7 @@
     composeViewController.hasAttachment = YES;
     composeViewController.attachmentImage = [UIImage imageNamed:@"Flower.jpg"];
     composeViewController.delegate = self;
-    [composeViewController presentFromRootViewController];
+    [self presentViewController: composeViewController animated: YES completion: nil];
 }
 
 - (void)foursquareExampleButtonPressed
@@ -104,8 +104,8 @@
             NSLog(@"Text: %@", composeViewController.text);
         }
     };
-    
-    [composeViewController presentFromRootViewController];
+
+    [self presentViewController: composeViewController animated: YES completion: nil];
 }
 
 #pragma mark -

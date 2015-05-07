@@ -121,7 +121,7 @@
         [_containerView addSubview:_paperclipView];
         [_paperclipView setHidden:YES];
     }
-        
+   
     if (!_attachmentImage)
         _attachmentImage = [UIImage imageNamed:@"REComposeViewController.bundle/URLAttachment"];
     
@@ -133,9 +133,9 @@
 
 -(void)viewDidAppear:(BOOL)animated
 {
-   [super viewDidAppear: animated];
-   [self.sheetView.textView becomeFirstResponder];
-   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(viewOrientationDidChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
+    [super viewDidAppear: animated];
+    [self.sheetView.textView becomeFirstResponder];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(viewOrientationDidChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -292,9 +292,9 @@
     UIImagePickerController *picker = [[UIImagePickerController alloc] init];
     // If our device has a cmera, we want to take a picture, otherwise we just pick from the library
     if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
-    [picker setSourceType:UIImagePickerControllerSourceTypeCamera];
+        [picker setSourceType:UIImagePickerControllerSourceTypeCamera];
     } else {
-    [picker setSourceType:UIImagePickerControllerSourceTypePhotoLibrary];
+        [picker setSourceType:UIImagePickerControllerSourceTypePhotoLibrary];
     }
 
     picker.delegate = self;
@@ -340,14 +340,12 @@
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source
 {
-   REComposerPresenter *transitioning = [REComposerPresenter new];
-   return transitioning;
+    return [REComposerPresenter new];
 }
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed
 {
-   REComposerDismisser * transitioning = [REComposerDismisser new];
-   return transitioning;
+    return [REComposerDismisser new];
 }
 
 @end
@@ -356,31 +354,31 @@
 
 - (NSTimeInterval)transitionDuration:(id <UIViewControllerContextTransitioning>)transitionContext
 {
-   return 0.3;
+    return 0.3;
 }
 
 - (void)animateTransition:(id <UIViewControllerContextTransitioning>)transitionContext
 {
-   REComposeViewController *composeViewController = (REComposeViewController*)[transitionContext viewControllerForKey:UITransitionContextToViewControllerKey];
-   
-   [[transitionContext containerView] addSubview:composeViewController.view];
-   composeViewController.backgroundView.alpha = 0;
-   
-   [UIView animateWithDuration: [self transitionDuration: transitionContext]
-                         delay:0
-                       options:UIViewAnimationOptionCurveEaseInOut
-                    animations:
-    ^{
-       [composeViewController layoutWithOrientation:composeViewController.interfaceOrientation
-                                              width:composeViewController.view.frame.size.width
-                                             height:composeViewController.view.frame.size.height];
-       composeViewController.backgroundView.alpha = 1;
-    }
-                    completion:
-    ^(BOOL completed)
-    {
-       [transitionContext completeTransition:![transitionContext transitionWasCancelled]];
-    }];
+    REComposeViewController *composeViewController = (REComposeViewController*)[transitionContext viewControllerForKey:UITransitionContextToViewControllerKey];
+    
+    [[transitionContext containerView] addSubview:composeViewController.view];
+    composeViewController.backgroundView.alpha = 0;
+    
+    [UIView animateWithDuration: [self transitionDuration: transitionContext]
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseInOut
+                     animations:
+     ^{
+         [composeViewController layoutWithOrientation:composeViewController.interfaceOrientation
+                                                width:composeViewController.view.frame.size.width
+                                               height:composeViewController.view.frame.size.height];
+         composeViewController.backgroundView.alpha = 1;
+     }
+                     completion:
+     ^(BOOL completed)
+     {
+         [transitionContext completeTransition:![transitionContext transitionWasCancelled]];
+     }];
 }
 
 @end
@@ -389,32 +387,32 @@
 
 - (NSTimeInterval)transitionDuration:(id <UIViewControllerContextTransitioning>)transitionContext
 {
-   return 0.3;
+    return 0.3;
 }
 
 - (void)animateTransition:(id <UIViewControllerContextTransitioning>)transitionContext
 {
-   REComposeViewController *composeViewController = (REComposeViewController*)[transitionContext viewControllerForKey:UITransitionContextFromViewControllerKey];
-
-   [composeViewController.sheetView.textView resignFirstResponder];
-
-   [UIView animateWithDuration: [self transitionDuration: transitionContext]
-                         delay:0
-                       options:UIViewAnimationOptionCurveEaseInOut
-                    animations:
-    ^{
-       composeViewController.containerView.alpha = 0;
-       composeViewController.backgroundView.alpha = 0;
-       CGRect frame = composeViewController.containerView.frame;
-       frame.origin.y =  composeViewController.view.frame.size.height;
-       composeViewController.containerView.frame = frame;
-    }
-                    completion:
-    ^(BOOL completed)
-    {
-       [transitionContext completeTransition:![transitionContext transitionWasCancelled]];
-       [composeViewController.view removeFromSuperview];
-    }];
+    REComposeViewController *composeViewController = (REComposeViewController*)[transitionContext viewControllerForKey:UITransitionContextFromViewControllerKey];
+    
+    [composeViewController.sheetView.textView resignFirstResponder];
+    
+    [UIView animateWithDuration: [self transitionDuration: transitionContext]
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseInOut
+                     animations:
+     ^{
+         composeViewController.containerView.alpha = 0;
+         composeViewController.backgroundView.alpha = 0;
+         CGRect frame = composeViewController.containerView.frame;
+         frame.origin.y =  composeViewController.view.frame.size.height;
+         composeViewController.containerView.frame = frame;
+     }
+                     completion:
+     ^(BOOL completed)
+     {
+         [transitionContext completeTransition:![transitionContext transitionWasCancelled]];
+         [composeViewController.view removeFromSuperview];
+     }];
 }
 
 @end
